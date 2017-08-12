@@ -28,16 +28,6 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#if defined(__ELF_WORD_SIZE) && __ELF_WORD_SIZE == 64
-typedef Elf64_Shdr Elf_Shdr;
-typedef Elf64_Ehdr Elf_Ehdr;
-typedef Elf64_Nhdr Elf_Nhdr;
-#else
-typedef Elf32_Shdr Elf_Shdr;
-typedef Elf32_Ehdr Elf_Ehdr;
-typedef Elf32_Nhdr Elf_Nhdr;
-#endif
-
 #define DGSH_NAME "DSpinellis/dgsh"
 
 #define MAX_LINE_LEN 1024
@@ -47,10 +37,10 @@ typedef Elf32_Nhdr Elf_Nhdr;
  * Return true if the provided ELF data contain a DGSH note section
  */
 static int
-has_dgsh_section(Elf_Shdr *shdr, char *strTab, int shNum, uint8_t *data)
+has_dgsh_section_32(Elf32_Shdr *shdr, char *strTab, int shNum, uint8_t *data)
 {
   int   i;
-  Elf_Nhdr *note;
+  Elf32_Nhdr *note;
 
   fprintf(stderr, "Number of sections=%d\n", shNum);
   for (i = 0; i < shNum; i++)
@@ -58,7 +48,26 @@ has_dgsh_section(Elf_Shdr *shdr, char *strTab, int shNum, uint8_t *data)
       fprintf(stderr, "Check section[%s]\n", &strTab[shdr[i].sh_name]);
       if (strcmp(&strTab[shdr[i].sh_name], ".note.ident"))
 	continue;
-      note = (Elf_Nhdr *)(data + shdr[i].sh_offset);
+      note = (Elf32_Nhdr *)(data + shdr[i].sh_offset);
+      if (note->n_namesz == sizeof(DGSH_NAME) && memcmp(note + 1, DGSH_NAME, sizeof(DGSH_NAME)) == 0)
+	return 1;
+  }
+  return 0;
+}
+
+static int
+has_dgsh_section_64(Elf64_Shdr *shdr, char *strTab, int shNum, uint8_t *data)
+{
+  int   i;
+  Elf64_Nhdr *note;
+
+  fprintf(stderr, "Number of sections=%d\n", shNum);
+  for (i = 0; i < shNum; i++)
+    {
+      fprintf(stderr, "Check section[%s]\n", &strTab[shdr[i].sh_name]);
+      if (strcmp(&strTab[shdr[i].sh_name], ".note.ident"))
+	continue;
+      note = (Elf64_Nhdr *)(data + shdr[i].sh_offset);
       if (note->n_namesz == sizeof(DGSH_NAME) && memcmp(note + 1, DGSH_NAME, sizeof(DGSH_NAME)) == 0)
 	return 1;
   }
@@ -114,27 +123,42 @@ is_script_dgsh_program(void *data, size_t len)
 static int
 is_elf_dgsh_program(void *data)
 {
-  Elf_Ehdr *elf;
-  Elf_Shdr *shdr;
+  Elf32_Ehdr *elf;
   char *strtab;
+  int arch;
 
   fprintf(stderr, "In is_elf_dgsh_program %p offset=%d\n", data, elf->e_shoff);
-  elf = (Elf_Ehdr *)data;
-  shdr = (Elf_Shdr *)(data + elf->e_shoff);
-  fprintf(stderr, "str tab index=%d\n", elf->e_shstrndx);
-  fprintf(stderr, "str tab offset=%d\n", shdr[elf->e_shstrndx].sh_offset);
-  strtab = (char *)(data + shdr[elf->e_shstrndx].sh_offset);
-  return has_dgsh_section(shdr, strtab, elf->e_shnum, (uint8_t*)data);
+  elf = (Elf32_Ehdr *)data;
+  arch = elf->e_ident[EI_CLASS];
+  fprintf(stderr, "arch=%d\n", arch);
+  if (arch == 1)
+    {
+      Elf32_Shdr *shdr;
+      shdr = (Elf32_Shdr *)(data + elf->e_shoff);
+      strtab = (char *)(data + shdr[elf->e_shstrndx].sh_offset);
+      fprintf(stderr, "str tab index=%d\n", elf->e_shstrndx);
+      fprintf(stderr, "str tab offset=%d\n", shdr[elf->e_shstrndx].sh_offset);
+      return has_dgsh_section_32(shdr, strtab, elf->e_shnum, (uint8_t*)data);
+    }
+  else if (arch == 2)
+    {
+      Elf64_Shdr *shdr;
+      shdr = (Elf64_Shdr *)(data + elf->e_shoff);
+      strtab = (char *)(data + shdr[elf->e_shstrndx].sh_offset);
+      fprintf(stderr, "str tab index=%d\n", elf->e_shstrndx);
+      fprintf(stderr, "str tab offset=%d\n", shdr[elf->e_shstrndx].sh_offset);
+      return has_dgsh_section_64(shdr, strtab, elf->e_shnum, (uint8_t*)data);
+    }
+  else
+    return 0;
 }
 
 int
 is_dgsh_program(const char *path)
 {
   void *data;
-  Elf_Ehdr *elf;
-  Elf_Shdr *shdr;
+  Elf32_Ehdr *elf;
   int fd;
-  char *strtab;
   int r;
   off_t file_size;
 
