@@ -1,4 +1,7 @@
-all: dgsh-compat hello
+all: dgsh-compat hello arch
+
+arch:
+	arch
 
 hello: hello.c dgsh-elf.s
 

@@ -118,9 +118,11 @@ is_elf_dgsh_program(void *data)
   Elf_Shdr *shdr;
   char *strtab;
 
-  fprintf(stderr, "In is_elf_dgsh_program %p\n", data);
+  fprintf(stderr, "In is_elf_dgsh_program %p offset=%d\n", data, elf->e_shoff);
   elf = (Elf_Ehdr *)data;
   shdr = (Elf_Shdr *)(data + elf->e_shoff);
+  fprintf(stderr, "str tab index=%d\n", elf->e_shstrndx);
+  fprintf(stderr, "str tab offset=%d\n", shdr[elf->e_shstrndx].sh_offset);
   strtab = (char *)(data + shdr[elf->e_shstrndx].sh_offset);
   return has_dgsh_section(shdr, strtab, elf->e_shnum, (uint8_t*)data);
 }
