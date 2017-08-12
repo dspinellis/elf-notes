@@ -5,5 +5,5 @@ hello: hello.c dgsh-elf.s
 dgsh-compat: dgsh_util.c
 	cc -o $@ -DDGSH_COMPAT $?
 
-test:
+test: dgsh-compat hello
 	./dgsh-compat hello && echo OK

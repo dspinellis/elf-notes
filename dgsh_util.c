@@ -54,6 +54,7 @@ has_dgsh_section(Elf_Shdr *shdr, char *strTab, int shNum, uint8_t *data)
 
   for (i = 0; i < shNum; i++)
     {
+      fprintf(stderr, "Check section[%s]\n", &strTab[shdr[i].sh_name]);
       if (strcmp(&strTab[shdr[i].sh_name], ".note.ident"))
 	continue;
       note = (Elf_Nhdr *)(data + shdr[i].sh_offset);
@@ -146,7 +147,7 @@ is_dgsh_program(const char *path)
   else
     r = is_elf_dgsh_program(data);
   munmap(data, file_size);
-  fprintf(stderr, "is_dgsh_program(%s)=%d\n", path, r)
+  fprintf(stderr, "is_dgsh_program(%s)=%d\n", path, r);
   return r;
 }
 
