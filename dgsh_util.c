@@ -42,10 +42,8 @@ has_dgsh_section_32(Elf32_Shdr *shdr, char *strTab, int shNum, uint8_t *data)
   int   i;
   Elf32_Nhdr *note;
 
-  fprintf(stderr, "Number of sections=%d\n", shNum);
   for (i = 0; i < shNum; i++)
     {
-      fprintf(stderr, "Check section[%s]\n", &strTab[shdr[i].sh_name]);
       if (strcmp(&strTab[shdr[i].sh_name], ".note.ident"))
 	continue;
       note = (Elf32_Nhdr *)(data + shdr[i].sh_offset);
@@ -61,10 +59,8 @@ has_dgsh_section_64(Elf64_Shdr *shdr, char *strTab, int shNum, uint8_t *data)
   int   i;
   Elf64_Nhdr *note;
 
-  fprintf(stderr, "Number of sections=%d\n", shNum);
   for (i = 0; i < shNum; i++)
     {
-      fprintf(stderr, "Check section[%s]\n", &strTab[shdr[i].sh_name]);
       if (strcmp(&strTab[shdr[i].sh_name], ".note.ident"))
 	continue;
       note = (Elf64_Nhdr *)(data + shdr[i].sh_offset);
@@ -127,27 +123,26 @@ is_elf_dgsh_program(void *data)
   char *strtab;
   int arch;
 
-  fprintf(stderr, "In is_elf_dgsh_program %p offset=%d\n", data, elf->e_shoff);
   elf = (Elf32_Ehdr *)data;
+
+  /* Check ELF magic number */
+  if (memcmp(elf->e_ident, ELFMAG, SELFMAG) != 0)
+    return 0;
+
   arch = elf->e_ident[EI_CLASS];
-  fprintf(stderr, "arch=%d\n", arch);
-  if (arch == 1)
+  if (arch == 1)	/* 32 bit */
     {
       Elf32_Shdr *shdr;
       shdr = (Elf32_Shdr *)(data + elf->e_shoff);
       strtab = (char *)(data + shdr[elf->e_shstrndx].sh_offset);
-      fprintf(stderr, "str tab index=%d\n", elf->e_shstrndx);
-      fprintf(stderr, "str tab offset=%d\n", shdr[elf->e_shstrndx].sh_offset);
       return has_dgsh_section_32(shdr, strtab, elf->e_shnum, (uint8_t*)data);
     }
-  else if (arch == 2)
+  else if (arch == 2)	/* 64 bit */
     {
       Elf64_Ehdr *elf64 = (Elf64_Ehdr *)elf;
       Elf64_Shdr *shdr;
       shdr = (Elf64_Shdr *)(data + elf64->e_shoff);
       strtab = (char *)(data + shdr[elf64->e_shstrndx].sh_offset);
-      fprintf(stderr, "str tab index=%d\n", elf64->e_shstrndx);
-      fprintf(stderr, "str tab offset=%d\n", shdr[elf64->e_shstrndx].sh_offset);
       return has_dgsh_section_64(shdr, strtab, elf64->e_shnum, (uint8_t*)data);
     }
   else
@@ -176,7 +171,6 @@ is_dgsh_program(const char *path)
   else
     r = is_elf_dgsh_program(data);
   munmap(data, file_size);
-  fprintf(stderr, "is_dgsh_program(%s)=%d\n", path, r);
   return r;
 }
 
