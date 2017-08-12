@@ -103,6 +103,7 @@ is_script_dgsh_program(void *data, size_t len)
 {
   len = len < MAX_LINE_LEN ? len : MAX_LINE_LEN;
 
+  fprintf(stderr, "In is_script_dgsh_program %p %d\n", data, len);
   return (linenstr(data, "dgsh-wrap", len) ||
   	  linenstr(data, "--dgsh", len) ||
   	  linenstr(data, "env dgsh", len) ||
@@ -117,6 +118,7 @@ is_elf_dgsh_program(void *data)
   Elf_Shdr *shdr;
   char *strtab;
 
+  fprintf(stderr, "In is_elf_dgsh_program %p\n", data);
   elf = (Elf_Ehdr *)data;
   shdr = (Elf_Shdr *)(data + elf->e_shoff);
   strtab = (char *)(data + shdr[elf->e_shstrndx].sh_offset);
