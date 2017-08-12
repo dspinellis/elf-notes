@@ -52,6 +52,7 @@ has_dgsh_section(Elf_Shdr *shdr, char *strTab, int shNum, uint8_t *data)
   int   i;
   Elf_Nhdr *note;
 
+  fprintf(stderr, "Number of sections=%d\n", shNum);
   for (i = 0; i < shNum; i++)
     {
       fprintf(stderr, "Check section[%s]\n", &strTab[shdr[i].sh_name]);
@@ -103,7 +104,6 @@ is_script_dgsh_program(void *data, size_t len)
 {
   len = len < MAX_LINE_LEN ? len : MAX_LINE_LEN;
 
-  fprintf(stderr, "In is_script_dgsh_program %p %d\n", data, len);
   return (linenstr(data, "dgsh-wrap", len) ||
   	  linenstr(data, "--dgsh", len) ||
   	  linenstr(data, "env dgsh", len) ||
