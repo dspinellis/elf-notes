@@ -142,12 +142,13 @@ is_elf_dgsh_program(void *data)
     }
   else if (arch == 2)
     {
+      Elf64_Ehdr *elf64 = (Elf64_Ehdr *)elf;
       Elf64_Shdr *shdr;
-      shdr = (Elf64_Shdr *)(data + elf->e_shoff);
-      strtab = (char *)(data + shdr[elf->e_shstrndx].sh_offset);
-      fprintf(stderr, "str tab index=%d\n", elf->e_shstrndx);
-      fprintf(stderr, "str tab offset=%d\n", shdr[elf->e_shstrndx].sh_offset);
-      return has_dgsh_section_64(shdr, strtab, elf->e_shnum, (uint8_t*)data);
+      shdr = (Elf64_Shdr *)(data + elf64->e_shoff);
+      strtab = (char *)(data + shdr[elf64->e_shstrndx].sh_offset);
+      fprintf(stderr, "str tab index=%d\n", elf64->e_shstrndx);
+      fprintf(stderr, "str tab offset=%d\n", shdr[elf64->e_shstrndx].sh_offset);
+      return has_dgsh_section_64(shdr, strtab, elf64->e_shnum, (uint8_t*)data);
     }
   else
     return 0;
